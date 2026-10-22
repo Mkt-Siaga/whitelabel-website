@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhiteLabel · Catálogo de Produtos</title>
+<meta name="description" content="Catálogo WhiteLabel de materiais de construção: ferramentas, discos, brocas, iluminação, hidráulica, ferragens e mais. Monte sua lista por código e solicite cotação.">
+<meta property="og:title" content="WhiteLabel · Catálogo de Produtos">
+<meta property="og:description" content="Ferramentas, discos, brocas, iluminação, hidráulica, ferragens e mais. Monte sua lista por código e solicite cotação.">
+<meta property="og:image" content="img/marca/whitelabel-logo-positivo-transparente.png">
+<meta name="theme-color" content="#123049">
+<link rel="icon" href="img/marca/favicon.png">
+<link rel="preload" href="fonts/montserrat-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="wrap topo-in">
+    <a class="marca" href="#inicio" aria-label="WhiteLabel – início">
+      <img src="img/marca/whitelabel-logo-positivo-transparente.png" alt="WhiteLabel" width="150" height="62">
+    </a>
+    <nav class="menu" aria-label="Seções">
+      <a href="#categorias">Categorias</a>
+      <a href="#produtos">Produtos</a>
+    </nav>
+    <button class="btn-lista" type="button" data-abrir-lista aria-label="Abrir lista de cotação">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>
+      <span>Cotação</span><b class="contador" hidden>0</b>
+    </button>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="hero">
+    <svg class="formas" viewBox="0 0 600 400" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+      <circle cx="470" cy="190" r="230" fill="#1dbdc8" opacity=".16"/>
+      <path d="M600 0 L600 120 C 520 60, 420 30, 300 0 Z" fill="#953b93" opacity=".55"/>
+      <path d="M600 400 L600 300 C 540 360, 460 390, 360 400 Z" fill="#1dbdc8" opacity=".5"/>
+    </svg>
+    <h1 class="so-leitor">WhiteLabel · Catálogo de Produtos</h1>
+    <div class="carrossel" data-carrossel aria-roledescription="carrossel" aria-label="Produtos em destaque">
+      <div class="slides" data-slides aria-live="off"></div>
+      <div class="wrap controles">
+        <button class="seta" type="button" data-ant aria-label="Anúncio anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+        <div class="pontos" data-pontos role="tablist" aria-label="Escolher anúncio"></div>
+        <button class="seta" type="button" data-prox aria-label="Próximo anúncio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+        <button class="seta pausa" type="button" data-pausa aria-label="Pausar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="faixa-info">
+    <div class="wrap faixa-in">
+      <p><strong data-total-produtos>–</strong> produtos e <strong data-total-codigos>–</strong> códigos em <strong data-total-categorias>–</strong> categorias. Monte sua lista com os códigos e solicite cotação.</p>
+      <div class="faixa-acoes">
+        <a class="btn btn-escuro" href="#produtos">Ver produtos</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="categorias" class="secao secao-cats">
+    <div class="wrap">
+      <h2 class="titulo">Categorias</h2>
+      <div class="cats" data-cats></div>
+    </div>
+  </section>
+
+  <section id="produtos" class="secao secao-produtos">
+    <div class="wrap">
+      <div class="prod-cab">
+        <h2 class="titulo">Produtos</h2>
+        <label class="busca">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar por nome, medida ou código" data-busca aria-label="Buscar produtos">
+        </label>
+      </div>
+      <div class="filtros" data-filtros role="tablist" aria-label="Filtrar por categoria"></div>
+      <div class="subfiltros" data-subfiltros></div>
+      <p class="resultado" data-resultado aria-live="polite"></p>
+      <div class="grade" data-grade></div>
+      <div class="mais"><button class="btn btn-escuro" type="button" data-mais hidden>Carregar mais</button></div>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  <div class="wrap rodape-in">
+    <img src="img/marca/whitelabel-logo-negativo-transparente.png" alt="WhiteLabel" width="190" height="78" loading="lazy">
+    <p>Imagens meramente ilustrativas. Cores, modelos, especificações e disponibilidade podem variar e devem ser confirmados na cotação.</p>
+    <p class="rodape-pe">© <span data-ano></span> WhiteLabel</p>
+  </div>
+</footer>
+
+<!-- detalhe do produto -->
+<dialog class="modal" data-modal aria-labelledby="modal-nome">
+  <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+  <div class="modal-in">
+    <div class="modal-foto">
+      <div class="modal-foto-principal" data-m-foto></div>
+      <div class="miniaturas" data-m-minis></div>
+    </div>
+    <div class="modal-txt">
+      <span class="sku" data-m-sku></span>
+      <h3 id="modal-nome" data-m-nome></h3>
+      <span class="modal-cat" data-m-cat></span>
+      <p class="modal-desc" data-m-desc></p>
+      <dl class="specs" data-m-specs></dl>
+    </div>
+  </div>
+  <div class="variantes">
+    <div class="variantes-cab">
+      <h4>Códigos disponíveis <small data-m-qtd></small></h4>
+      <label class="busca busca-mini">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" placeholder="Filtrar medida ou código" data-m-filtro aria-label="Filtrar códigos">
+      </label>
+    </div>
+    <div class="tabela-rolagem"><table class="tabela" data-m-tabela></table></div>
+  </div>
+</dialog>
+
+<!-- lista de cotação -->
+<aside class="gaveta" data-gaveta aria-label="Lista de cotação" hidden>
+  <div class="gaveta-cab">
+    <h3>Lista de cotação</h3>
+    <button class="fechar" type="button" data-fechar-lista aria-label="Fechar lista">×</button>
+  </div>
+  <p class="gaveta-vazia" data-lista-vazia>Sua lista está vazia. Abra um produto e use “+” nos códigos que quer cotar.</p>
+  <ul class="lista" data-lista></ul>
+  <div class="gaveta-pe" data-lista-pe hidden>
+    <p>Gere o PDF da cotação e envie para o nosso time comercial.</p>
+    <label class="campo">Seu nome <span>(opcional)</span><input type="text" data-cli-nome autocomplete="name" maxlength="80"></label>
+    <label class="campo">Empresa <span>(opcional)</span><input type="text" data-cli-empresa autocomplete="organization" maxlength="80"></label>
+    <button class="btn btn-escuro" type="button" data-pdf>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14"/></svg>
+      Baixar cotação em PDF
+    </button>
+    <button class="btn-link" type="button" data-limpar>Limpar lista</button>
+  </div>
+</aside>
+<div class="veu" data-veu hidden></div>
+<div class="aviso" data-aviso role="status" hidden></div>
+
+<script src="js/dados.js"></script>
+<script src="js/destaques.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
