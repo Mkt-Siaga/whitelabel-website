@@ -1,16 +1,16 @@
-// Escolhe o idioma da página antes de tudo carregar: ?lang=zh|pt, escolha salva, ou idioma do navegador.
-// Em chinês, carrega também o dicionário do catálogo (js/dados-zh.js) e troca os textos marcados com data-zh.
+// Escolhe o idioma da página antes de tudo carregar: ?lang=en|pt, escolha salva, ou idioma do navegador.
+// Em inglês, carrega também o dicionário do catálogo (js/dados-en.js) e troca os textos marcados com data-en.
 (() => {
   const CHAVE = "whitelabel-idioma";
   let lang = new URLSearchParams(location.search).get("lang");
   try {
-    if (lang) localStorage.setItem(CHAVE, lang === "zh" ? "zh" : "pt"); // link com ?lang= também fixa a escolha
+    if (lang) localStorage.setItem(CHAVE, lang === "en" ? "en" : "pt"); // link com ?lang= também fixa a escolha
     else lang = localStorage.getItem(CHAVE);
   } catch { /* sem armazenamento */ }
-  lang ||= /^zh/i.test(navigator.language || "") ? "zh" : "pt";
-  lang = lang === "zh" ? "zh" : "pt";
-  document.documentElement.lang = lang === "zh" ? "zh-CN" : "pt-BR";
-  if (lang === "zh") document.write('<script src="js/dados-zh.js"><\/script>');
+  lang ||= /^pt/i.test(navigator.language || "pt") ? "pt" : "en";
+  lang = lang === "en" ? "en" : "pt";
+  document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
+  if (lang === "en") document.write('<script src="js/dados-en.js"><\/script>');
 
   window.trocarIdioma = (novo) => {
     try { localStorage.setItem(CHAVE, novo); } catch { /* vale só nesta visita */ }
@@ -25,10 +25,10 @@
       b.setAttribute("aria-pressed", b.dataset.idioma === lang);
       b.addEventListener("click", () => { if (b.dataset.idioma !== lang) window.trocarIdioma(b.dataset.idioma); });
     }
-    if (lang !== "zh") return;
-    document.title = "WhiteLabel · 产品目录";
-    for (const el of document.querySelectorAll("[data-zh]")) el.innerHTML = el.dataset.zh;
-    for (const el of document.querySelectorAll("[data-zh-placeholder]")) el.placeholder = el.dataset.zhPlaceholder;
-    for (const el of document.querySelectorAll("[data-zh-aria]")) el.setAttribute("aria-label", el.dataset.zhAria);
+    if (lang !== "en") return;
+    document.title = "WhiteLabel · Product Catalog";
+    for (const el of document.querySelectorAll("[data-en]")) el.innerHTML = el.dataset.en;
+    for (const el of document.querySelectorAll("[data-en-placeholder]")) el.placeholder = el.dataset.enPlaceholder;
+    for (const el of document.querySelectorAll("[data-en-aria]")) el.setAttribute("aria-label", el.dataset.enAria);
   };
 })();
