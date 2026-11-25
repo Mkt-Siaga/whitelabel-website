@@ -2,15 +2,20 @@
   const { categorias, produtos } = window.WHITELABEL;
   const $ = (s, el = document) => el.querySelector(s);
   const POR_VEZ = 48;
-  const TITULO = "WhiteLabel · Catálogo de Produtos";
+  // idioma: "pt" (padrão) ou "zh"; a escolha é feita no <head> (js/idioma.js)
+  const ZH = document.documentElement.lang === "zh-CN";
+  const DIC = (ZH && window.WHITELABEL_ZH) || {};
+  const T = (s) => (s && DIC[s]) || s;              // texto do catálogo no idioma da página
+  const L = (pt, zh) => (ZH ? zh : pt);             // texto da interface
+  const TITULO = L("WhiteLabel · Catálogo de Produtos", "WhiteLabel · 产品目录");
   const catPorSigla = Object.fromEntries(categorias.map((c) => [c.sigla, c]));
   const porSku = Object.fromEntries(produtos.map((p) => [p.sku, p]));
   const normal = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const tag = '<svg viewBox="0 0 120 60" aria-hidden="true"><path d="M8 6h62l22 22-22 22H8z" fill="none" stroke="#2e6a8f" stroke-width="5" stroke-linejoin="round"/><circle cx="78" cy="28" r="5" fill="#0b3d55"/><path d="M58 14h14v12l-6 6-4-4h-4z" fill="#953b93"/></svg>';
-  const semFoto = `<div class="sem-foto">${tag}<span>Foto em atualização</span></div>`;
+  const semFoto = `<div class="sem-foto">${tag}<span>${L("Foto em atualização", "图片更新中")}</span></div>`;
   const foto = (p, grande) => p.foto
-    ? `<img src="img/produtos/${p.foto}${grande ? "" : "-p"}.webp" alt="${esc(p.nome)}" loading="lazy" decoding="async" width="${grande ? 640 : 360}" height="${grande ? 640 : 360}">`
+    ? `<img src="img/produtos/${p.foto}${grande ? "" : "-p"}.webp" alt="${esc(T(p.nome))}" loading="lazy" decoding="async" width="${grande ? 640 : 360}" height="${grande ? 640 : 360}">`
     : semFoto;
 
   // ---------- códigos (variantes) ----------
@@ -23,10 +28,12 @@
     p._vars = p.vars.map((v, i) => ({
       cod: v[iCod] || `${p.sku}/${i + 1}`, semCodigo: !v[iCod], breve: iSt >= 0 && /breve/i.test(v[iSt]),
       desc: p.cols.map((c, i) => (NAO_DESCREVE.test(c) || !v[i] || v[i] === "-" ? "" : v[i])).filter(Boolean).join(" · "),
-      busca: normal(v.join(" ")),
+      descV: p.cols.map((c, i) => (NAO_DESCREVE.test(c) || !v[i] || v[i] === "-" ? "" : T(v[i]))).filter(Boolean).join(" · "),
+      busca: normal(v.join(" ") + (ZH ? " " + v.map(T).join(" ") : "")),
     }));
     p._vars.forEach((v) => { if (v.cod && !porCodigo[v.cod]) porCodigo[v.cod] = { p, v }; });
-    p._busca = normal(`${p.sku} ${p.nome} ${p.sub} ${catPorSigla[p.cat]?.nome ?? ""} ${Object.values(p.specs).join(" ")}`);
+    const base = `${p.sku} ${p.nome} ${p.sub} ${catPorSigla[p.cat]?.nome ?? ""} ${Object.values(p.specs).join(" ")}`;
+    p._busca = normal(ZH ? `${base} ${T(p.nome)} ${T(p.sub)} ${T(catPorSigla[p.cat]?.nome)} ${Object.values(p.specs).map((x) => T(String(x))).join(" ")}` : base);
     p._codigos = p._vars.filter((v) => !v.breve).length;
   });
   const totalCodigos = produtos.reduce((s, p) => s + p._vars.filter((v) => !v.breve && !v.semCodigo).length, 0);
@@ -41,7 +48,7 @@
 
   // ---------- números do topo ----------
   $("[data-total-produtos]").textContent = produtos.length;
-  $("[data-total-codigos]").textContent = totalCodigos.toLocaleString("pt-BR");
+  $("[data-total-codigos]").textContent = totalCodigos.toLocaleString(L("pt-BR", "zh-CN"));
   $("[data-total-categorias]").textContent = categorias.length;
   $("[data-ano]").textContent = new Date().getFullYear();
 
@@ -50,7 +57,7 @@
     const capa = produtos.find((p) => p.cat === c.sigla && p.foto);
     return `<button class="cat" type="button" data-ir-cat="${c.sigla}">
       ${capa ? `<img src="img/produtos/${capa.foto}-p.webp" alt="" width="64" height="64" loading="lazy">` : `<span class="mini">${tag}</span>`}
-      <span><strong>${esc(c.nome)}</strong><small>${c.total} ${c.total === 1 ? "produto" : "produtos"}</small></span>
+      <span><strong>${esc(T(c.nome))}</strong><small>${c.total} ${L(c.total === 1 ? "produto" : "produtos", "个产品")}</small></span>
     </button>`;
   }).join("");
   $("[data-cats]").addEventListener("click", (e) => {
@@ -79,11 +86,11 @@
   function desenharFiltros() {
     const chip = (valor, rotulo, qtd, ativo, attr) =>
       `<button class="chip" type="button" role="tab" ${attr}="${esc(valor)}" aria-selected="${ativo}">${esc(rotulo)}${qtd != null ? `<small>${qtd}</small>` : ""}</button>`;
-    $("[data-filtros]").innerHTML = chip("", "Todos", produtos.length, !estado.cat, "data-f-cat") +
-      categorias.map((c) => chip(c.sigla, c.nome, c.total, estado.cat === c.sigla, "data-f-cat")).join("");
+    $("[data-filtros]").innerHTML = chip("", L("Todos", "全部"), produtos.length, !estado.cat, "data-f-cat") +
+      categorias.map((c) => chip(c.sigla, T(c.nome), c.total, estado.cat === c.sigla, "data-f-cat")).join("");
     const cat = catPorSigla[estado.cat];
     $("[data-subfiltros]").innerHTML = cat && cat.subs.length > 1
-      ? chip("", "Todas", null, !estado.sub, "data-f-sub") + cat.subs.map((s) => chip(s, s, null, estado.sub === s, "data-f-sub")).join("")
+      ? chip("", L("Todas", "全部"), null, !estado.sub, "data-f-sub") + cat.subs.map((s) => chip(s, T(s), null, estado.sub === s, "data-f-sub")).join("")
       : "";
   }
 
@@ -95,12 +102,12 @@
         <span class="card-foto">${foto(p)}</span>
         <span class="card-txt">
           <span class="sku">${p.sku}</span>
-          <h3>${esc(p.nome)}</h3>
-          <span class="sub">${esc(p.sub)}</span>
-          ${v ? `<span class="achou">${v.breve ? "Em breve" : v.semCodigo ? "Sob consulta" : `Código ${esc(v.cod)}`}${v.desc ? ` · ${esc(v.desc)}` : ""}</span>` : `<span class="qtd-cod">${p._codigos} ${p._vars.every((x) => x.semCodigo) ? (p._codigos === 1 ? "opção" : "opções") : (p._codigos === 1 ? "código" : "códigos")}</span>`}
+          <h3>${esc(T(p.nome))}</h3>
+          <span class="sub">${esc(T(p.sub))}</span>
+          ${v ? `<span class="achou">${v.breve ? L("Em breve", "即将上市") : v.semCodigo ? L("Sob consulta", "询价") : `${L("Código", "编码")} ${esc(v.cod)}`}${v.descV ? ` · ${esc(v.descV)}` : ""}</span>` : `<span class="qtd-cod">${p._codigos} ${p._vars.every((x) => x.semCodigo) ? L(p._codigos === 1 ? "opção" : "opções", "个选项") : L(p._codigos === 1 ? "código" : "códigos", "个编码")}</span>`}
         </span>
       </button>
-      <button class="card-add ${n ? "ok" : "ver"}" type="button" data-abrir="${p.sku}"${v ? ` data-cod="${esc(v.cod)}"` : ""}>${n ? `✓ ${n} na cotação` : "Ver códigos"}</button>
+      <button class="card-add ${n ? "ok" : "ver"}" type="button" data-abrir="${p.sku}"${v ? ` data-cod="${esc(v.cod)}"` : ""}>${n ? L(`✓ ${n} na cotação`, `✓ 已加入 ${n} 项`) : L("Ver códigos", "查看编码")}</button>
     </article>`;
   };
 
@@ -108,8 +115,8 @@
     desenharFiltros();
     const itens = filtrados();
     const vis = itens.slice(0, estado.quantos);
-    $("[data-grade]").innerHTML = vis.length ? vis.map(card).join("") : `<p class="vazio">Nenhum produto encontrado. Tente outro termo ou categoria.</p>`;
-    $("[data-resultado]").textContent = `${itens.length} ${itens.length === 1 ? "produto" : "produtos"}${estado.cat ? ` em ${catPorSigla[estado.cat].nome}` : ""}${estado.sub ? ` · ${estado.sub}` : ""}`;
+    $("[data-grade]").innerHTML = vis.length ? vis.map(card).join("") : `<p class="vazio">${L("Nenhum produto encontrado. Tente outro termo ou categoria.", "未找到产品，请尝试其他关键词或类别。")}</p>`;
+    $("[data-resultado]").textContent = `${itens.length} ${L(itens.length === 1 ? "produto" : "produtos", "个产品")}${estado.cat ? `${L(" em ", " · ")}${T(catPorSigla[estado.cat].nome)}` : ""}${estado.sub ? ` · ${T(estado.sub)}` : ""}`;
     $("[data-mais]").hidden = itens.length <= estado.quantos;
   }
 
@@ -148,14 +155,14 @@
     $("[data-m-foto]").innerHTML = foto(p, true);
     $("[data-m-minis]").innerHTML = p.foto && p.extras
       ? [p.foto, ...Array.from({ length: p.extras }, (_, i) => `${p.foto}-${i + 2}`)].map((f, i) =>
-        `<button type="button" data-mini="${f}" aria-pressed="${!i}" aria-label="Foto ${i + 1}"><img src="img/produtos/${f}.webp" alt="" width="56" height="56" loading="lazy"></button>`).join("")
+        `<button type="button" data-mini="${f}" aria-pressed="${!i}" aria-label="${L("Foto", "图片")} ${i + 1}"><img src="img/produtos/${f}.webp" alt="" width="56" height="56" loading="lazy"></button>`).join("")
       : "";
     $("[data-m-sku]").textContent = p.sku;
-    $("[data-m-nome]").textContent = p.nome;
-    $("[data-m-cat]").textContent = `${catPorSigla[p.cat]?.nome ?? ""} · ${p.sub}`;
-    $("[data-m-desc]").textContent = p.desc;
+    $("[data-m-nome]").textContent = T(p.nome);
+    $("[data-m-cat]").textContent = `${T(catPorSigla[p.cat]?.nome) ?? ""} · ${T(p.sub)}`;
+    $("[data-m-desc]").textContent = T(p.desc);
     const specs = Object.entries(p.specs);
-    $("[data-m-specs]").innerHTML = specs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+    $("[data-m-specs]").innerHTML = specs.map(([k, v]) => `<dt>${esc(T(k))}</dt><dd>${esc(T(String(v)))}</dd>`).join("");
     $("[data-m-qtd]").textContent = `(${p._vars.length})`;
     $("[data-m-filtro]").value = filtroInicial;
     $("[data-m-filtro]").closest(".busca").hidden = p._vars.length < 8 && !filtroInicial;
@@ -163,7 +170,7 @@
     desenharTabela();
     if (!modal.open) modal.showModal();
     modal.scrollTop = 0;
-    document.title = `${p.nome} · WhiteLabel`;
+    document.title = `${T(p.nome)} · WhiteLabel`;
   }
   // colunas de embalagem/peso/RPM somem no celular para o código e o botão caberem
   const sec = (c) => (/^(Qtd\.|Peso bruto|RPM)/.test(c) ? ' class="sec"' : "");
@@ -175,11 +182,11 @@
     const iCols = cols.map((c) => p.cols.indexOf(c));
     const linhas = p.vars.map((v, i) => [v, p._vars[i]]).filter(([, x]) => ws.every((w) => x.busca.includes(w)));
     $("[data-m-tabela]").innerHTML =
-      `<thead><tr>${cols.map((c) => `<th scope="col"${sec(c)}>${esc(c)}</th>`).join("")}<th class="acao"><span class="so-leitor">Cotação</span></th></tr></thead><tbody>` +
+      `<thead><tr>${cols.map((c) => `<th scope="col"${sec(c)}>${esc(T(c))}</th>`).join("")}<th class="acao"><span class="so-leitor">${L("Cotação", "报价")}</span></th></tr></thead><tbody>` +
       (linhas.length ? linhas.map(([v, x]) => `<tr class="${x.cod && lista[x.cod] ? "na" : ""}">${iCols.map((i, k) => cols[k] === "Código"
-        ? `<td class="cod">${x.breve ? '<span class="breve">Em breve</span>' : x.semCodigo ? '<span class="sob">Sob consulta</span>' : esc(v[i])}</td>`
-        : `<td${sec(cols[k])}>${esc(v[i])}</td>`).join("")}<td class="acao">${x.breve ? "" : `<button class="add ${lista[x.cod] ? "ok" : ""}" type="button" data-add="${esc(x.cod)}" aria-label="${lista[x.cod] ? "Remover" : "Adicionar"} ${esc(x.cod)} ${lista[x.cod] ? "da" : "à"} cotação">${lista[x.cod] ? "✓ Na lista" : "+ Cotar"}</button>`}</td></tr>`).join("")
-        : `<tr class="nada"><td colspan="${cols.length + 1}">Nenhum código com esse filtro.</td></tr>`) + "</tbody>";
+        ? `<td class="cod">${x.breve ? `<span class="breve">${L("Em breve", "即将上市")}</span>` : x.semCodigo ? `<span class="sob">${L("Sob consulta", "询价")}</span>` : esc(v[i])}</td>`
+        : `<td${sec(cols[k])}>${esc(T(v[i]))}</td>`).join("")}<td class="acao">${x.breve ? "" : `<button class="add ${lista[x.cod] ? "ok" : ""}" type="button" data-add="${esc(x.cod)}" aria-label="${esc(lista[x.cod] ? L(`Remover ${x.cod} da cotação`, `从报价单移除 ${x.cod}`) : L(`Adicionar ${x.cod} à cotação`, `将 ${x.cod} 加入报价单`))}">${lista[x.cod] ? L("✓ Na lista", "✓ 已加入") : L("+ Cotar", "+ 询价")}</button>`}</td></tr>`).join("")
+        : `<tr class="nada"><td colspan="${cols.length + 1}">${L("Nenhum código com esse filtro.", "没有符合条件的编码。")}</td></tr>`) + "</tbody>";
   }
   $("[data-m-filtro]").addEventListener("input", desenharTabela);
   $("[data-m-tabela]").addEventListener("click", (e) => { const b = e.target.closest("[data-add]"); if (b) alternar(b.dataset.add); });
@@ -208,7 +215,7 @@
     if (lista[cod]) delete lista[cod]; else lista[cod] = 1;
     salvar(); atualizarLista(); desenhar();
     if (modal.open) desenharTabela();
-    avisar(lista[cod] ? `${cod} adicionado à cotação` : `${cod} removido da lista`);
+    avisar(lista[cod] ? L(`${cod} adicionado à cotação`, `${cod} 已加入报价单`) : L(`${cod} removido da lista`, `${cod} 已从清单移除`));
   }
   function atualizarLista() {
     const cods = Object.keys(lista);
@@ -220,8 +227,8 @@
       const { p, v } = porCodigo[cod];
       return `<li>
         ${p.foto ? `<img src="img/produtos/${p.foto}-p.webp" alt="" width="56" height="56">` : `<span class="mini"></span>`}
-        <span><span class="sku">${esc(cod)}</span><strong>${esc(p.nome)}</strong>${v.desc ? `<span class="var">${esc(v.desc)}</span>` : ""}</span>
-        <span class="qtd"><input type="number" min="1" step="1" value="${lista[cod]}" data-qtd="${esc(cod)}" aria-label="Quantidade de ${esc(cod)}"><button type="button" data-rem="${esc(cod)}" aria-label="Remover ${esc(cod)}">×</button></span>
+        <span><span class="sku">${esc(cod)}</span><strong>${esc(T(p.nome))}</strong>${v.descV ? `<span class="var">${esc(v.descV)}</span>` : ""}</span>
+        <span class="qtd"><input type="number" min="1" step="1" value="${lista[cod]}" data-qtd="${esc(cod)}" aria-label="${L("Quantidade de", "数量")} ${esc(cod)}"><button type="button" data-rem="${esc(cod)}" aria-label="${L("Remover", "移除")} ${esc(cod)}">×</button></span>
       </li>`;
     }).join("");
   }
@@ -351,8 +358,8 @@
     const b = e.currentTarget;
     if (!Object.keys(lista).length) return;
     b.disabled = true;
-    try { await gerarPDF(); avisar("PDF da cotação gerado"); }
-    catch { avisar("Não foi possível gerar o PDF. Tente novamente."); }
+    try { await gerarPDF(); avisar(L("PDF da cotação gerado", "报价单 PDF 已生成")); }
+    catch { avisar(L("Não foi possível gerar o PDF. Tente novamente.", "无法生成 PDF，请重试。")); }
     finally { b.disabled = false; }
   });
 
@@ -369,23 +376,23 @@
   let atual = 0, timer = null, pausado = matchMedia("(prefers-reduced-motion: reduce)").matches, sobre = false;
   slides.innerHTML = destaques.map((d, i) => {
     const p = porSku[d.sku];
-    return `<a class="slide" href="#p=${p.sku}" style="--cor:${esc(d.cor || "#1dbdc8")}" role="group" aria-roledescription="anúncio" aria-label="${i + 1} de ${destaques.length}: ${esc(p.nome)}">
+    return `<a class="slide" href="#p=${p.sku}" style="--cor:${esc(d.cor || "#1dbdc8")}" role="group" aria-roledescription="${L("anúncio", "广告")}" aria-label="${i + 1} / ${destaques.length}: ${esc(T(p.nome))}">
       <div class="wrap slide-in">
         <div class="slide-txt">
-          <span class="sobre">${esc(d.selo)}</span>
-          <h2>${esc(d.titulo)}</h2>
-          <p>${esc(d.texto)}</p>
-          <span class="btn btn-claro slide-cta">Ver códigos <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
-          <span class="slide-sku">${p.sku} · ${esc(p.nome)} · ${p._codigos} ${p._codigos === 1 ? "código" : "códigos"}</span>
+          <span class="sobre">${esc(ZH ? T(catPorSigla[p.cat]?.nome) : d.selo)}</span>
+          <h2>${esc(ZH && d.titulo_zh ? d.titulo_zh : d.titulo)}</h2>
+          <p>${esc(ZH && d.texto_zh ? d.texto_zh : d.texto)}</p>
+          <span class="btn btn-claro slide-cta">${L("Ver códigos", "查看编码")} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+          <span class="slide-sku">${p.sku} · ${esc(T(p.nome))} · ${p._codigos} ${L(p._codigos === 1 ? "código" : "códigos", "个编码")}</span>
         </div>
         <div class="slide-foto">
-          <span class="selo-novo" aria-hidden="true">Destaque</span>
-          <span class="disco"><img src="img/produtos/${p.foto}.webp" alt="${esc(p.nome)}" width="640" height="640" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}></span>
+          <span class="selo-novo" aria-hidden="true">${L("Destaque", "推荐")}</span>
+          <span class="disco"><img src="img/produtos/${p.foto}.webp" alt="${esc(T(p.nome))}" width="640" height="640" ${i ? 'loading="lazy"' : 'fetchpriority="high"'}></span>
         </div>
       </div>
     </a>`;
   }).join("");
-  pontos.innerHTML = destaques.map((d, i) => `<button class="ponto" type="button" role="tab" data-ir="${i}" aria-label="Anúncio ${i + 1}"></button>`).join("");
+  pontos.innerHTML = destaques.map((d, i) => `<button class="ponto" type="button" role="tab" data-ir="${i}" aria-label="${L("Anúncio", "广告")} ${i + 1}"></button>`).join("");
   const itensSlide = [...slides.children];
 
   function ir(i) {
@@ -401,7 +408,7 @@
   };
   const botaoPausa = $("[data-pausa]");
   const mostrarPausa = () => {
-    botaoPausa.setAttribute("aria-label", pausado ? "Reproduzir" : "Pausar");
+    botaoPausa.setAttribute("aria-label", pausado ? L("Reproduzir", "播放") : L("Pausar", "暂停"));
     botaoPausa.innerHTML = pausado
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
       : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg>';
