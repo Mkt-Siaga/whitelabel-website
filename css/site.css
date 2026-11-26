@@ -299,3 +299,17 @@ a { color: inherit; }
   .idiomas + .btn-lista { margin-left: 8px; }
   .btn-lista span { display: none; }
 }
+
+/* ---------- modo EN · 中文: chinês logo abaixo do inglês ---------- */
+.zh { display: block; margin-top: 2px; font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", system-ui, sans-serif; font-size: .86em; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--suave); }
+.tabela th .zh, .rodape .zh, .slide-txt .zh, .abertura .zh { color: inherit; opacity: .75; }
+.slide-txt h2 .zh { margin-top: 8px; font-size: .5em; font-weight: 600; }
+.slide-txt p .zh { margin-top: 4px; }
+.topo .zh, .btn .zh, .chip .zh, .btn-link .zh { display: inline; margin: 0 0 0 5px; font-size: .9em; color: inherit; opacity: .8; }
+.menu .zh { display: none; }
+.tabela td .zh { font-size: .82em; white-space: normal; }
+.idiomas button[data-idioma="en"] { padding: 0 12px; }
+.variantes-cab h4 .zh { display: inline; margin-left: 6px; }
+@media (max-width: 760px) {
+  .modal-in { grid-template-columns: 1fr; }
+}

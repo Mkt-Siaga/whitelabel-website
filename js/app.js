@@ -2,11 +2,17 @@
   const { categorias, produtos } = window.WHITELABEL;
   const $ = (s, el = document) => el.querySelector(s);
   const POR_VEZ = 48;
-  // idioma: "pt" (padrão) ou "en"; a escolha é feita no <head> (js/idioma.js)
+  // idioma: "pt" (padrão) ou "en" = inglês com o chinês junto; a escolha é feita no <head> (js/idioma.js)
   const EN = document.documentElement.lang === "en";
-  const DIC = (EN && window.WHITELABEL_EN) || {};
-  const T = (s) => (s && DIC[s]) || s;              // texto do catálogo no idioma da página
-  const L = (pt, en) => (EN ? en : pt);             // texto da interface
+  const DEN = (EN && window.WHITELABEL_EN) || {}, DZH = (EN && window.WHITELABEL_ZH) || {};
+  const TE = (s) => (s && DEN[s]) || s;                                  // inglês (também o PDF da cotação)
+  const TZ = (s) => (s && DZH[s] && DZH[s] !== TE(s) ? DZH[s] : "");     // chinês, quando existe e difere
+  const T = (s) => (TZ(s) ? `${TE(s)} / ${TZ(s)}` : TE(s));              // texto simples: "inglês / 中文"
+  // html: inglês e, logo abaixo, o chinês menor
+  const H = (s) => esc(TE(s)) + (TZ(s) ? `<span class="zh" lang="zh-CN">${esc(TZ(s))}</span>` : "");
+  const UI_ZH = {"WhiteLabel · Product Catalog":"产品目录","Photo coming soon":"图片更新中","product":"个产品","products":"个产品","All":"全部","Coming soon":"即将上市","On request":"询价","Code":"编码","option":"个选项","options":"个选项","code":"个编码","codes":"个编码","View codes":"查看编码","No products found. Try another term or category.":"未找到产品，请尝试其他关键词或类别。","Photo":"图片","Quote":"报价","✓ In list":"✓ 已加入","+ Quote":"+ 询价","No codes match this filter.":"没有符合条件的编码。","Quantity of":"数量","Remove":"移除","Quote PDF generated":"报价单 PDF 已生成","Could not generate the PDF. Please try again.":"无法生成 PDF，请重试。","banner":"广告","Featured":"推荐","Banner":"广告","Play":"播放","Pause":"暂停"};
+  const L = (pt, en) => (EN ? (UI_ZH[en] ? `${en} / ${UI_ZH[en]}` : en) : pt);   // texto da interface
+  const LP = (pt, en) => (EN ? en : pt);                                 // PDF da cotação: sem fonte chinesa, só inglês
   const TITULO = L("WhiteLabel · Catálogo de Produtos", "WhiteLabel · Product Catalog");
   const catPorSigla = Object.fromEntries(categorias.map((c) => [c.sigla, c]));
   const porSku = Object.fromEntries(produtos.map((p) => [p.sku, p]));
@@ -28,7 +34,7 @@
     p._vars = p.vars.map((v, i) => ({
       cod: v[iCod] || `${p.sku}/${i + 1}`, semCodigo: !v[iCod], breve: iSt >= 0 && /breve/i.test(v[iSt]),
       desc: p.cols.map((c, i) => (NAO_DESCREVE.test(c) || !v[i] || v[i] === "-" ? "" : v[i])).filter(Boolean).join(" · "),
-      descV: p.cols.map((c, i) => (NAO_DESCREVE.test(c) || !v[i] || v[i] === "-" ? "" : T(v[i]))).filter(Boolean).join(" · "),
+      descV: p.cols.map((c, i) => (NAO_DESCREVE.test(c) || !v[i] || v[i] === "-" ? "" : TE(v[i]))).filter(Boolean).join(" · "),
       busca: normal(v.join(" ") + (EN ? " " + v.map(T).join(" ") : "")),
     }));
     p._vars.forEach((v) => { if (v.cod && !porCodigo[v.cod]) porCodigo[v.cod] = { p, v }; });
@@ -47,9 +53,10 @@
   const naLista = (p) => p._vars.filter((v) => v.cod && lista[v.cod]).length;
 
   // ---------- números do topo ----------
-  $("[data-total-produtos]").textContent = produtos.length;
-  $("[data-total-codigos]").textContent = totalCodigos.toLocaleString(L("pt-BR", "en-US"));
-  $("[data-total-categorias]").textContent = categorias.length;
+  // no modo EN · 中文 a frase aparece duas vezes (inglês e chinês): preenche as duas
+  const numeros = { produtos: produtos.length, codigos: totalCodigos.toLocaleString(LP("pt-BR", "en-US")), categorias: categorias.length };
+  for (const [k, n] of Object.entries(numeros))
+    for (const el of document.querySelectorAll(`[data-total-${k}], [data-total-${k}-zh]`)) el.textContent = n;
   $("[data-ano]").textContent = new Date().getFullYear();
 
   // ---------- atalhos de categoria ----------
@@ -57,7 +64,7 @@
     const capa = produtos.find((p) => p.cat === c.sigla && p.foto);
     return `<button class="cat" type="button" data-ir-cat="${c.sigla}">
       ${capa ? `<img src="img/produtos/${capa.foto}-p.webp" alt="" width="64" height="64" loading="lazy">` : `<span class="mini">${tag}</span>`}
-      <span><strong>${esc(T(c.nome))}</strong><small>${c.total} ${L(c.total === 1 ? "produto" : "produtos", c.total === 1 ? "product" : "products")}</small></span>
+      <span><strong>${H(c.nome)}</strong><small>${c.total} ${L(c.total === 1 ? "produto" : "produtos", c.total === 1 ? "product" : "products")}</small></span>
     </button>`;
   }).join("");
   $("[data-cats]").addEventListener("click", (e) => {
@@ -102,7 +109,7 @@
         <span class="card-foto">${foto(p)}</span>
         <span class="card-txt">
           <span class="sku">${p.sku}</span>
-          <h3>${esc(T(p.nome))}</h3>
+          <h3>${H(p.nome)}</h3>
           <span class="sub">${esc(T(p.sub))}</span>
           ${v ? `<span class="achou">${v.breve ? L("Em breve", "Coming soon") : v.semCodigo ? L("Sob consulta", "On request") : `${L("Código", "Code")} ${esc(v.cod)}`}${v.descV ? ` · ${esc(v.descV)}` : ""}</span>` : `<span class="qtd-cod">${p._codigos} ${p._vars.every((x) => x.semCodigo) ? L(p._codigos === 1 ? "opção" : "opções", p._codigos === 1 ? "option" : "options") : L(p._codigos === 1 ? "código" : "códigos", p._codigos === 1 ? "code" : "codes")}</span>`}
         </span>
@@ -158,11 +165,11 @@
         `<button type="button" data-mini="${f}" aria-pressed="${!i}" aria-label="${L("Foto", "Photo")} ${i + 1}"><img src="img/produtos/${f}.webp" alt="" width="56" height="56" loading="lazy"></button>`).join("")
       : "";
     $("[data-m-sku]").textContent = p.sku;
-    $("[data-m-nome]").textContent = T(p.nome);
+    $("[data-m-nome]").innerHTML = H(p.nome);
     $("[data-m-cat]").textContent = `${T(catPorSigla[p.cat]?.nome) ?? ""} · ${T(p.sub)}`;
-    $("[data-m-desc]").textContent = T(p.desc);
+    $("[data-m-desc]").textContent = TZ(p.desc) ? `${TE(p.desc)}\n\n${TZ(p.desc)}` : TE(p.desc);
     const specs = Object.entries(p.specs);
-    $("[data-m-specs]").innerHTML = specs.map(([k, v]) => `<dt>${esc(T(k))}</dt><dd>${esc(T(String(v)))}</dd>`).join("");
+    $("[data-m-specs]").innerHTML = specs.map(([k, v]) => `<dt>${H(k)}</dt><dd>${H(String(v))}</dd>`).join("");
     $("[data-m-qtd]").textContent = `(${p._vars.length})`;
     $("[data-m-filtro]").value = filtroInicial;
     $("[data-m-filtro]").closest(".busca").hidden = p._vars.length < 8 && !filtroInicial;
@@ -182,10 +189,10 @@
     const iCols = cols.map((c) => p.cols.indexOf(c));
     const linhas = p.vars.map((v, i) => [v, p._vars[i]]).filter(([, x]) => ws.every((w) => x.busca.includes(w)));
     $("[data-m-tabela]").innerHTML =
-      `<thead><tr>${cols.map((c) => `<th scope="col"${sec(c)}>${esc(T(c))}</th>`).join("")}<th class="acao"><span class="so-leitor">${L("Cotação", "Quote")}</span></th></tr></thead><tbody>` +
+      `<thead><tr>${cols.map((c) => `<th scope="col"${sec(c)}>${H(c)}</th>`).join("")}<th class="acao"><span class="so-leitor">${L("Cotação", "Quote")}</span></th></tr></thead><tbody>` +
       (linhas.length ? linhas.map(([v, x]) => `<tr class="${x.cod && lista[x.cod] ? "na" : ""}">${iCols.map((i, k) => cols[k] === "Código"
         ? `<td class="cod">${x.breve ? `<span class="breve">${L("Em breve", "Coming soon")}</span>` : x.semCodigo ? `<span class="sob">${L("Sob consulta", "On request")}</span>` : esc(v[i])}</td>`
-        : `<td${sec(cols[k])}>${esc(T(v[i]))}</td>`).join("")}<td class="acao">${x.breve ? "" : `<button class="add ${lista[x.cod] ? "ok" : ""}" type="button" data-add="${esc(x.cod)}" aria-label="${esc(lista[x.cod] ? L(`Remover ${x.cod} da cotação`, `Remove ${x.cod} from quote`) : L(`Adicionar ${x.cod} à cotação`, `Add ${x.cod} to quote`))}">${lista[x.cod] ? L("✓ Na lista", "✓ In list") : L("+ Cotar", "+ Quote")}</button>`}</td></tr>`).join("")
+        : `<td${sec(cols[k])}>${H(v[i])}</td>`).join("")}<td class="acao">${x.breve ? "" : `<button class="add ${lista[x.cod] ? "ok" : ""}" type="button" data-add="${esc(x.cod)}" aria-label="${esc(lista[x.cod] ? L(`Remover ${x.cod} da cotação`, `Remove ${x.cod} from quote`) : L(`Adicionar ${x.cod} à cotação`, `Add ${x.cod} to quote`))}">${lista[x.cod] ? L("✓ Na lista", "✓ In list") : L("+ Cotar", "+ Quote")}</button>`}</td></tr>`).join("")
         : `<tr class="nada"><td colspan="${cols.length + 1}">${L("Nenhum código com esse filtro.", "No codes match this filter.")}</td></tr>`) + "</tbody>";
   }
   $("[data-m-filtro]").addEventListener("input", desenharTabela);
@@ -227,7 +234,7 @@
       const { p, v } = porCodigo[cod];
       return `<li>
         ${p.foto ? `<img src="img/produtos/${p.foto}-p.webp" alt="" width="56" height="56">` : `<span class="mini"></span>`}
-        <span><span class="sku">${esc(cod)}</span><strong>${esc(T(p.nome))}</strong>${v.descV ? `<span class="var">${esc(v.descV)}</span>` : ""}</span>
+        <span><span class="sku">${esc(cod)}</span><strong>${H(p.nome)}</strong>${v.descV ? `<span class="var">${esc(v.descV)}</span>` : ""}</span>
         <span class="qtd"><input type="number" min="1" step="1" value="${lista[cod]}" data-qtd="${esc(cod)}" aria-label="${L("Quantidade de", "Quantity of")} ${esc(cod)}"><button type="button" data-rem="${esc(cod)}" aria-label="${L("Remover", "Remove")} ${esc(cod)}">×</button></span>
       </li>`;
     }).join("");
@@ -286,8 +293,8 @@
     const W = 210, H = 297, M = 15;
     const NAVY = [18, 48, 73], TEAL = [15, 127, 136], ROXO = [149, 59, 147], CINZA = [91, 102, 112], LINHA = [227, 231, 236];
     const hoje = new Date();
-    const data = hoje.toLocaleDateString(L("pt-BR", "en-US"));
-    const numero = L("COT-", "QT-") + `${hoje.getFullYear()}${String(hoje.getMonth() + 1).padStart(2, "0")}${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getHours()).padStart(2, "0")}${String(hoje.getMinutes()).padStart(2, "0")}`;
+    const data = hoje.toLocaleDateString(LP("pt-BR", "en-US"));
+    const numero = LP("COT-", "QT-") + `${hoje.getFullYear()}${String(hoje.getMonth() + 1).padStart(2, "0")}${String(hoje.getDate()).padStart(2, "0")}-${String(hoje.getHours()).padStart(2, "0")}${String(hoje.getMinutes()).padStart(2, "0")}`;
 
     const cabecalho = () => {
       doc.setFillColor(...NAVY); doc.rect(0, 0, W, 34, "F");
@@ -295,32 +302,32 @@
       doc.setFillColor(...ROXO); doc.rect(W * 0.7, 34, W * 0.3, 1.4, "F");
       if (logo) { const lh = 20, lw = lh * logo.w / logo.h; doc.addImage(logo.dados, "JPEG", M, 7, lw, lh); }
       doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(15);
-      doc.text(L("Solicitação de Cotação", "Request for Quotation"), W - M, 15, { align: "right" });
+      doc.text(LP("Solicitação de Cotação", "Request for Quotation"), W - M, 15, { align: "right" });
       doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(198, 214, 224);
-      doc.text(`${L("Nº", "No.")} ${numero}   ·   ${data}`, W - M, 21.5, { align: "right" });
+      doc.text(`${LP("Nº", "No.")} ${numero}   ·   ${data}`, W - M, 21.5, { align: "right" });
       doc.text("mkt-siaga.github.io/whitelabel-website", W - M, 27, { align: "right" });
     };
     const rodape = (pg, total) => {
       doc.setDrawColor(...LINHA); doc.setLineWidth(0.3); doc.line(M, H - 14, W - M, H - 14);
       doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...CINZA);
-      doc.text(L("Imagens ilustrativas. Preços, especificações e disponibilidade serão confirmados pelo time comercial.", "Images for illustration only. Prices, specifications and availability will be confirmed by our sales team."), M, H - 9);
-      doc.text(L(`Página ${pg} de ${total}`, `Page ${pg} of ${total}`), W - M, H - 9, { align: "right" });
+      doc.text(LP("Imagens ilustrativas. Preços, especificações e disponibilidade serão confirmados pelo time comercial.", "Images for illustration only. Prices, specifications and availability will be confirmed by our sales team."), M, H - 9);
+      doc.text(LP(`Página ${pg} de ${total}`, `Page ${pg} of ${total}`), W - M, H - 9, { align: "right" });
     };
     const cabTabela = (y) => {
       doc.setFillColor(244, 246, 248); doc.rect(M, y, W - 2 * M, 8, "F");
       doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...CINZA);
-      doc.text("ITEM", M + 3, y + 5.3); doc.text(L("FOTO", "PHOTO"), M + 13, y + 5.3); doc.text(L("CÓDIGO", "CODE"), M + 37, y + 5.3);
-      doc.text(L("PRODUTO", "PRODUCT"), M + 66, y + 5.3); doc.text(L("QTD", "QTY"), W - M - 3, y + 5.3, { align: "right" });
+      doc.text("ITEM", M + 3, y + 5.3); doc.text(LP("FOTO", "PHOTO"), M + 13, y + 5.3); doc.text(LP("CÓDIGO", "CODE"), M + 37, y + 5.3);
+      doc.text(LP("PRODUTO", "PRODUCT"), M + 66, y + 5.3); doc.text(LP("QTD", "QTY"), W - M - 3, y + 5.3, { align: "right" });
       return y + 8;
     };
 
     cabecalho();
     let y = 45;
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...TEAL);
-    doc.text(L("SOLICITANTE", "REQUESTED BY"), M, y);
+    doc.text(LP("SOLICITANTE", "REQUESTED BY"), M, y);
     doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(...NAVY);
-    doc.text(`${L("Nome", "Name")}: ${nome || "—"}`, M, y + 6);
-    doc.text(`${L("Empresa", "Company")}: ${empresa || "—"}`, M + 90, y + 6);
+    doc.text(`${LP("Nome", "Name")}: ${nome || "—"}`, M, y + 6);
+    doc.text(`${LP("Empresa", "Company")}: ${empresa || "—"}`, M + 90, y + 6);
     y = cabTabela(y + 13);
 
     const ALT = 22;
@@ -334,10 +341,10 @@
       doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...TEAL);
       doc.text(cod, M + 37, y + ALT / 2 + 1.5);
       doc.setTextColor(...NAVY);
-      const linhas = doc.splitTextToSize(T(p.nome), 100).slice(0, 2);
+      const linhas = doc.splitTextToSize(TE(p.nome), 100).slice(0, 2);
       doc.text(linhas, M + 66, y + 7);
       doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...CINZA);
-      doc.text(doc.splitTextToSize(v.descV || `${T(catPorSigla[p.cat]?.nome) ?? ""} · ${T(p.sub)}`, 100)[0], M + 66, y + 7 + linhas.length * 4.2);
+      doc.text(doc.splitTextToSize(v.descV || `${TE(catPorSigla[p.cat]?.nome) ?? ""} · ${TE(p.sub)}`, 100)[0], M + 66, y + 7 + linhas.length * 4.2);
       doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(...NAVY);
       doc.text(String(qtd), W - M - 3, y + ALT / 2 + 1.5, { align: "right" });
       doc.setDrawColor(...LINHA); doc.setLineWidth(0.3); doc.line(M, y + ALT, W - M, y + ALT);
@@ -347,11 +354,11 @@
     if (y + 16 > H - 20) { doc.addPage(); cabecalho(); y = 45; }
     const unidades = itens.reduce((s, it) => s + Number(it.qtd), 0);
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...NAVY);
-    doc.text(L(`${itens.length} ${itens.length === 1 ? "código" : "códigos"} · ${unidades} ${unidades === 1 ? "unidade" : "unidades"}`, `${itens.length} ${itens.length === 1 ? "code" : "codes"} · ${unidades} ${unidades === 1 ? "unit" : "units"}`), W - M - 3, y + 9, { align: "right" });
+    doc.text(LP(`${itens.length} ${itens.length === 1 ? "código" : "códigos"} · ${unidades} ${unidades === 1 ? "unidade" : "unidades"}`, `${itens.length} ${itens.length === 1 ? "code" : "codes"} · ${unidades} ${unidades === 1 ? "unit" : "units"}`), W - M - 3, y + 9, { align: "right" });
 
     const total = doc.getNumberOfPages();
     for (let pg = 1; pg <= total; pg++) { doc.setPage(pg); rodape(pg, total); }
-    doc.save(`${L("Cotacao", "Quote")}_WhiteLabel_${numero}.pdf`);
+    doc.save(`${LP("Cotacao", "Quote")}_WhiteLabel_${numero}.pdf`);
   }
 
   $("[data-pdf]").addEventListener("click", async (e) => {
@@ -380,10 +387,10 @@
       <div class="wrap slide-in">
         <div class="slide-txt">
           <span class="sobre">${esc(EN ? T(catPorSigla[p.cat]?.nome) : d.selo)}</span>
-          <h2>${esc(EN && d.titulo_en ? d.titulo_en : d.titulo)}</h2>
-          <p>${esc(EN && d.texto_en ? d.texto_en : d.texto)}</p>
+          <h2>${esc(EN && d.titulo_en ? d.titulo_en : d.titulo)}${EN && d.titulo_zh ? `<span class="zh" lang="zh-CN">${esc(d.titulo_zh)}</span>` : ""}</h2>
+          <p>${esc(EN && d.texto_en ? d.texto_en : d.texto)}${EN && d.texto_zh ? `<span class="zh" lang="zh-CN">${esc(d.texto_zh)}</span>` : ""}</p>
           <span class="btn btn-claro slide-cta">${L("Ver códigos", "View codes")} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
-          <span class="slide-sku">${p.sku} · ${esc(T(p.nome))} · ${p._codigos} ${L(p._codigos === 1 ? "código" : "códigos", p._codigos === 1 ? "code" : "codes")}</span>
+          <span class="slide-sku">${p.sku} · ${esc(TE(p.nome))} · ${p._codigos} ${LP(p._codigos === 1 ? "código" : "códigos", p._codigos === 1 ? "code" : "codes")}</span>
         </div>
         <div class="slide-foto">
           <span class="selo-novo" aria-hidden="true">${L("Destaque", "Featured")}</span>

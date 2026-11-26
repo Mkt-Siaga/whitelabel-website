@@ -1,5 +1,5 @@
 // Anúncios do carrossel do topo. Editável à mão (o exportador não mexe neste arquivo).
-// sku: produto que o banner abre · titulo_en/texto_en: versão em inglês (o selo usa o nome da categoria)
+// sku: produto que o banner abre · titulo_en/texto_en e titulo_zh/texto_zh: versão EN · 中文 (o selo usa o nome da categoria)
 // · cor: brilho atrás da foto · textos curtos, sem prometer especificação não confirmada.
 window.WHITELABEL_DESTAQUES = [
   {
@@ -9,6 +9,8 @@ window.WHITELABEL_DESTAQUES = [
     texto: "Disco diamantado multiuso em blister duplo, com furo de 22 mm.",
     titulo_en: "One blade for many materials",
     texto_en: "Multi-purpose diamond blade in double blister packaging, 22 mm bore.",
+    titulo_zh: "一片锯片，切割多种材料",
+    texto_zh: "多用途金刚石锯片，双吸塑包装，孔径 22 mm。",
     cor: "#1dbdc8",
   },
   {
@@ -18,6 +20,8 @@ window.WHITELABEL_DESTAQUES = [
     texto: "Trenas compactas em vários comprimentos e larguras de fita.",
     titulo_en: "The right measure on every job",
     texto_en: "Compact tape measures in several lengths and blade widths.",
+    titulo_zh: "每个工地都量得准",
+    texto_zh: "小巧卷尺，多种长度和尺宽可选。",
     cor: "#f2c230",
   },
   {
@@ -27,6 +31,8 @@ window.WHITELABEL_DESTAQUES = [
     texto: "Refletores LED para ambientes residenciais, comerciais e corporativos.",
     titulo_en: "Bright light for outdoor areas",
     texto_en: "LED floodlights for residential, commercial and corporate spaces.",
+    titulo_zh: "户外照明更明亮",
+    texto_zh: "LED 投光灯，适用于住宅、商业及办公场所。",
     cor: "#953b93",
   },
   {
@@ -36,6 +42,8 @@ window.WHITELABEL_DESTAQUES = [
     texto: "Alicate bomba d'água para trabalhos hidráulicos e mecânicos.",
     titulo_en: "A firm grip on pipes and fittings",
     texto_en: "Water pump pliers for plumbing and mechanical work.",
+    titulo_zh: "管件接头，夹得更牢",
+    texto_zh: "水泵钳，适用于水暖及机械作业。",
     cor: "#f2c230",
   },
   {
@@ -45,6 +53,8 @@ window.WHITELABEL_DESTAQUES = [
     texto: "Esguicho para mangueira, prático na irrigação e na limpeza.",
     titulo_en: "Spray control in the palm of your hand",
     texto_en: "Hose spray nozzle, handy for watering and cleaning.",
+    titulo_zh: "水流随心掌控",
+    texto_zh: "软管喷枪，灌溉和清洁都方便。",
     cor: "#3fd08a",
   },
 ];
